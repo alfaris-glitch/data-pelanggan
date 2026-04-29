@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Pesanan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Form Input Pesanan</h2>
+        
+        <form id="dataForm" class="space-y-4">
+            <input type="hidden" name="paket_final" id="paketFinalValue">
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700">Nama</label>
+                <input type="text" name="nama" placeholder="Masukkan nama" required 
+                    class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700">Pilih Paket</label>
+                <select id="selectPaket" onchange="cekPilihanPaket()" required 
+                    class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                    <option value="">-- Pilih Paket --</option>
+                    <option value="50.000">Paket 50 Ribu</option>
+                    <option value="100.000">Paket 100 Ribu</option>
+                    <option value="150.000">Paket 150 Ribu</option>
+                    <option value="200.000">Paket 200 Ribu</option>
+                    <option value="Lainnya">Lainnya (Input Nominal)</option>
+                </select>
+            </div>
+
+            <div id="divInputManual" class="hidden">
+                <label class="block text-sm font-semibold text-blue-600">Masukkan Nominal Lain</label>
+                <input type="number" id="inputManual" placeholder="Contoh: 75000" 
+                    class="w-full mt-1 px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700">Alamat</label>
+                <input type="text" name="alamat" placeholder="Alamat pengiriman" required 
+                    class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700">Nomor Telepon</label>
+                <input type="tel" name="telepon" placeholder="0812xxxxxx" required 
+                    class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            <button type="submit" id="btnSubmit" 
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-200 mt-4">
+                Simpan Data
+            </button>
+        </form>
+
+        <div id="notifikasi" class="hidden mt-4 text-center font-bold p-3 rounded-lg border"></div>
+    </div>
+
+    <script>
+        // MASUKKAN URL DARI APPS SCRIPT KE DALAM TANDA PETIK DI BAWAH INI
+        const URL_WEB_APP = 'https://script.google.com/macros/s/AKfycbzWk6mgE-iZqze_D73UrZKuQwc6dxbFbtkpsGtok-9-E315gPov3ODPG_0aGRMUd6Fy/exec';
+        
+        const form = document.getElementById('dataForm');
+        const selectPaket = document.getElementById('selectPaket');
+        const divInputManual = document.getElementById('divInputManual');
+        const inputManual = document.getElementById('inputManual');
+        const paketFinalValue = document.getElementById('paketFinalValue');
+        const btnSubmit = document.getElementById('btnSubmit');
+        const notifikasi = document.getElementById('notifikasi');
+
+        // Fungsi memunculkan input manual jika pilih "Lainnya"
+        function cekPilihanPaket() {
+            if(selectPaket.value === "Lainnya") {
+                divInputManual.classList.remove('hidden');
+                inputManual.required = true;
+            } else {
+                divInputManual.classList.add('hidden');
+                inputManual.required = false;
+            }
+        }
+
+        form.addEventListener('submit', e => {
+            e.preventDefault(); // Mencegah halaman reload
+            
+            btnSubmit.innerHTML = "Menyimpan...";
+            btnSubmit.disabled = true;
+
+            // Kunci nilai paket sebelum dikirim ke Google Sheets
+            if(selectPaket.value === "Lainnya") {
+                paketFinalValue.value = inputManual.value;
+            } else {
+                paketFinalValue.value = selectPaket.value;
+            }
+
+            // Kirim data di latar belakang
+            fetch(URL_WEB_APP, { method: 'POST', body: new FormData(form) })
+            .then(response => {
+                // Tampilkan sukses & reset form otomatis
+                notifikasi.innerHTML = "✓ Data berhasil masuk ke Excel!";
+                notifikasi.className = "mt-4 text-center font-bold p-3 rounded-lg border bg-green-100 border-green-400 text-green-700 block";
+                form.reset();
+                divInputManual.classList.add('hidden');
+                btnSubmit.innerHTML = "Simpan Data";
+                btnSubmit.disabled = false;
+                
+                // Hilangkan notif setelah 4 detik
+                setTimeout(() => notifikasi.classList.add('hidden'), 4000);
+            })
+            .catch(error => {
+                notifikasi.innerHTML = "✖ Gagal menyimpan data. Cek koneksi.";
+                notifikasi.className = "mt-4 text-center font-bold p-3 rounded-lg border bg-red-100 border-red-400 text-red-700 block";
+                btnSubmit.innerHTML = "Coba Lagi";
+                btnSubmit.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>
